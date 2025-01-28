@@ -2,8 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 
-// Change to your server’s URL if deployed:
-const socket = io("http://localhost:4000"); 
+
+// Use Render domain for the server
+const socket = io("https://<YOUR_RENDER_SERVER_URL>.onrender.com"); // Replace with your Render server URL
+
 
 function App() {
   // Connection states

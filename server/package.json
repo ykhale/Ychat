@@ -1,7 +1,7 @@
 {
   "name": "ychat-server",
-  "version": "1.1.0",
-  "description": "Backend for YChat with ephemeral messages + passkey rooms",
+  "version": "1.0.0",
+  "description": "Server for YChat application",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
@@ -9,6 +9,8 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.18.2",
+    "mongodb": "^6.12.0",
+    "mongoose": "^6.8.0",
     "socket.io": "^4.5.4"
   }
 }
