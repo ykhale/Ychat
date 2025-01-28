@@ -8,7 +8,7 @@ const mongoose = require('mongoose');
 const app = express();
 
 // ✅ CORS Configuration - Allow only your Netlify frontend
-const allowedOrigins = ["https://glittering-caramel-50dfdb.netlify.app"]; // Update with your actual Netlify domain
+const allowedOrigins = ["https://ychats.netlify.app"]; // Update with your actual Netlify domain
 app.use(cors({
   origin: allowedOrigins,
   methods: ["GET", "POST"],
