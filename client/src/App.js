@@ -4,7 +4,7 @@ import io from 'socket.io-client';
 
 
 // Use Render domain for the server
-const socket = io("https://<YOUR_RENDER_SERVER_URL>.onrender.com"); // Replace with your Render server URL
+const socket = io("https://ychat-lovu.onrender.com/"); // Replace with your Render server URL
 
 
 function App() {
