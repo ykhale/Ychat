@@ -1,0 +1,43 @@
+# Node.js dependencies
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Environment Variables & Credentials
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+
+# Build files
+/build
+/dist
+
+# Logs
+logs/
+*.log
+logs/*.log
+logs/**/*.log
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+
+# Editor/IDE settings
+.vscode/
+.idea/
+*.iml
+
+# Cache & Temporary Files
+.cache/
+.tmp/
+
+
+# Git-ignored files from dependencies
+**/node_modules/*
+
+# Ignore package lock files
+package-lock.json
+client/package-lock.json
+server/package-lock.json
