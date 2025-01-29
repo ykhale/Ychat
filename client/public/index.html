@@ -2,10 +2,56 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Chat All Day with Y Chat</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>YChat - The Ultimate Chat Experience</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+
+    <!-- Favicon -->
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+
+    <style>
+      /* Reset margins and paddings */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      /* Gradient background */
+      body {
+        font-family: "Poppins", sans-serif;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: #ffffff;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        text-align: center;
+      }
+
+      /* Center the root app */
+      #root {
+        width: 100%;
+        max-width: 1200px;
+        min-height: 90vh;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.2);
+        backdrop-filter: blur(8px);
+      }
+
+      /* Placeholder text */
+      ::placeholder {
+        color: #ddd;
+      }
+    </style>
   </head>
+
   <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
   </body>
 </html>
