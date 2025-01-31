@@ -4,54 +4,64 @@
     <meta charset="utf-8" />
     <title>YChat - The Ultimate Chat Experience</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-    <!-- Google Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
-
-    <!-- Favicon -->
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
-
+    <!-- 1. Google Font (Poppins) -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <!-- 2. Base styling for a beautiful layout -->
     <style>
-      /* Reset margins and paddings */
+      /* Reset default padding/margin & box-sizing across all elements */
       * {
         margin: 0;
         padding: 0;
         box-sizing: border-box;
       }
 
-      /* Gradient background */
+      /* 3. Body styling:
+         - uses the Poppins font
+         - a pleasing pastel gradient background
+         - centers content vertically/horizontally
+      */
       body {
         font-family: "Poppins", sans-serif;
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        color: #ffffff;
+        background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+        min-height: 100vh;
         display: flex;
         justify-content: center;
         align-items: center;
-        min-height: 100vh;
-        text-align: center;
       }
 
-      /* Center the root app */
+      /* 4. The root container for your React app - occupies the entire available space */
       #root {
         width: 100%;
-        max-width: 1200px;
-        min-height: 90vh;
-        background: rgba(255, 255, 255, 0.1);
-        padding: 20px;
+        max-width: 1400px; /* Optional: restricts the max width for large screens */
+        margin: auto;
+        min-height: 100vh;
+        display: flex;
+        align-items: stretch; /* As originally stated */
+        /* ★ Added these for a nicer container feel ★ */
         border-radius: 10px;
-        box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.2);
-        backdrop-filter: blur(8px);
+        background-color: rgba(255, 255, 255, 0.85);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
       }
 
-      /* Placeholder text */
+      /* 5. Optionally style placeholders or other global elements */
       ::placeholder {
-        color: #ddd;
+        color: #999;
       }
+
+      /* 6. If you want a custom "loading" message before React loads, style it below
+         (currently, there's no content in the body except #root).
+      */
+      /* e.g., .loading { ... } */
     </style>
   </head>
-
   <body>
+    <!-- If JavaScript is disabled, show a warning. (Your React app won't work without JS.) -->
     <noscript>You need to enable JavaScript to run this app.</noscript>
+
+    <!-- 7. Root container for the entire React application -->
     <div id="root"></div>
   </body>
 </html>
