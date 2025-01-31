@@ -2,14 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 
-// Use Render domain for the server
-const socket = io("https://ychat-lovu.onrender.com/"); // Replace with your Render server URL
+// Use Render domain for the server (or your own server URL)
+const socket = io("https://ychat-lovu.onrender.com/");
 
 function App() {
   // Connection states
   const [username, setUsername] = useState("");
   const [roomName, setRoomName] = useState("");
-  const [passkey, setPasskey] = useState("");
   const [isJoined, setIsJoined] = useState(false);
   const [joinError, setJoinError] = useState("");
 
@@ -55,13 +54,18 @@ function App() {
       alert("Username and Room Name are required!");
       return;
     }
-    socket.emit('joinRoom', { roomName, passkey: passkey || null, username });
+    // Emit join request without passkey
+    socket.emit('joinRoom', { roomName, username });
   };
 
   const sendMessage = () => {
     if (!currentMessage.trim()) return;
     // Send a message in this specific room
-    socket.emit('chatMessage', { roomName, user: username, text: currentMessage });
+    socket.emit('chatMessage', {
+      roomName,
+      user: username,
+      text: currentMessage,
+    });
     setCurrentMessage("");
   };
 
@@ -69,8 +73,8 @@ function App() {
     <div style={styles.container}>
       {!isJoined ? (
         <div style={styles.joinContainer}>
-          <h1>YChat (Rooms + Passkeys)</h1>
-          {joinError && <div style={{color: 'red'}}>{joinError}</div>}
+          <h1>YChat (No Passkey)</h1>
+          {joinError && <div style={{ color: 'red' }}>{joinError}</div>}
           <input
             style={styles.input}
             type="text"
@@ -85,19 +89,13 @@ function App() {
             value={roomName}
             onChange={(e) => setRoomName(e.target.value)}
           />
-          <input
-            style={styles.input}
-            type="text"
-            placeholder="Passkey (optional)"
-            value={passkey}
-            onChange={(e) => setPasskey(e.target.value)}
-          />
           <button style={styles.button} onClick={handleJoinRoom}>
             Join Room
           </button>
         </div>
       ) : (
         <div style={styles.chatContainer}>
+          {/* Left Panel: Users */}
           <div style={styles.userPanel}>
             <h3>Users ({usersList.length})</h3>
             {usersList.map((user, idx) => (
@@ -106,25 +104,31 @@ function App() {
               </div>
             ))}
           </div>
+
+          {/* Right Panel: Chat */}
           <div style={styles.chatPanel}>
             <h2>Room: {roomName}</h2>
+
             <div style={styles.messagesPanel}>
               {messages.map((msg, idx) => (
                 <div
                   key={idx}
                   style={{
                     ...styles.messageItem,
-                    alignSelf: msg.user === username ? 'flex-end' : 'flex-start',
-                    backgroundColor: msg.user === username ? '#DCF8C6' : '#F8F8F8'
+                    alignSelf:
+                      msg.user === username ? 'flex-end' : 'flex-start',
+                    backgroundColor:
+                      msg.user === username ? '#DCF8C6' : '#F8F8F8',
                   }}
                 >
                   <strong>{msg.user}</strong>
-                  <em style={{marginLeft: 5}}>{msg.time}</em>
+                  <em style={{ marginLeft: 5 }}>{msg.time}</em>
                   <br />
                   {msg.text}
                 </div>
               ))}
             </div>
+
             <div style={styles.inputRow}>
               <input
                 style={styles.input}
@@ -145,24 +149,24 @@ function App() {
   );
 }
 
-// Minimal inline styles (updated for a cleaner, more modern look)
+// Minimal inline styles
 const styles = {
   container: {
     fontFamily: 'Poppins, sans-serif',
     padding: 20,
-    width: '100%'
+    width: '100%',
   },
   joinContainer: {
     maxWidth: 400,
     margin: 'auto',
     display: 'flex',
     flexDirection: 'column',
-    gap: 12,
+    gap: 10,
     backgroundColor: '#FFFFFFEE',
     padding: 20,
     borderRadius: 8,
     boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
-    textAlign: 'center'
+    textAlign: 'center',
   },
   input: {
     padding: 10,
@@ -170,7 +174,7 @@ const styles = {
     border: '2px solid #a8edea',
     borderRadius: 6,
     outline: 'none',
-    marginTop: 4
+    marginTop: 4,
   },
   button: {
     padding: 12,
@@ -180,7 +184,7 @@ const styles = {
     backgroundColor: '#FF758C',
     color: '#fff',
     fontWeight: 600,
-    marginTop: 8
+    marginTop: 8,
   },
   chatContainer: {
     display: 'flex',
@@ -198,14 +202,21 @@ const styles = {
     borderRight: '1px solid #ccc',
     padding: 10,
     overflowY: 'auto',
-    backgroundColor: '#fefefe'
+    backgroundColor: '#fefefe',
+  },
+  userItem: {
+    padding: 8,
+    marginBottom: 4,
+    borderRadius: 4,
+    backgroundColor: '#F9F9F9',
+    borderBottom: '1px solid #eee',
   },
   chatPanel: {
     width: '80%',
     display: 'flex',
     flexDirection: 'column',
     padding: 10,
-    backgroundColor: '#fff'
+    backgroundColor: '#fff',
   },
   messagesPanel: {
     flex: 1,
@@ -216,7 +227,7 @@ const styles = {
     padding: 10,
     border: '1px solid #ddd',
     borderRadius: 6,
-    backgroundColor: '#fafafa'
+    backgroundColor: '#fafafa',
   },
   messageItem: {
     maxWidth: '60%',
@@ -224,19 +235,12 @@ const styles = {
     borderRadius: 6,
     wordWrap: 'break-word',
     boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-    fontSize: '0.95rem'
-  },
-  userItem: {
-    padding: 8,
-    marginBottom: 4,
-    borderRadius: 4,
-    backgroundColor: '#F9F9F9',
-    borderBottom: '1px solid #eee'
+    fontSize: '0.95rem',
   },
   inputRow: {
     display: 'flex',
-    marginTop: 10
-  }
+    marginTop: 10,
+  },
 };
 
 export default App;
