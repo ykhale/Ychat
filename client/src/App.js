@@ -59,6 +59,9 @@ function App() {
   // Timer for typing indicator debounce
   const typingTimeoutRef = useRef(null);
 
+  // Ref for the join section (for "Get Started Now" scrolling)
+  const joinSectionRef = useRef(null);
+
   useEffect(() => {
     socket.on('joinedRoom', (data) => {
       setIsJoined(true);
@@ -167,7 +170,14 @@ function App() {
     socket.emit('stopTyping', { roomName, username });
   };
 
-  // Define dynamic styles (including hero section, dark mode adjustments, etc.)
+  // Scroll to join form when "Get Started Now" is clicked
+  const scrollToJoin = () => {
+    if (joinSectionRef.current) {
+      joinSectionRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  // Define dynamic styles (including hero section, footer, dark mode adjustments, etc.)
   const themeStyles = {
     container: {
       fontFamily: 'Poppins, sans-serif',
@@ -218,6 +228,16 @@ function App() {
       border: '2px solid #a8edea',
       borderRadius: 6,
       outline: 'none',
+      marginTop: 4,
+      backgroundColor: darkMode ? '#333' : '#fff',
+      color: darkMode ? '#e0e0e0' : '#333'
+    },
+    fileLabel: {
+      cursor: 'pointer',
+      padding: '10px',
+      border: '2px solid #a8edea',
+      borderRadius: 6,
+      display: 'block',
       marginTop: 4,
       backgroundColor: darkMode ? '#333' : '#fff',
       color: darkMode ? '#e0e0e0' : '#333'
@@ -337,6 +357,22 @@ function App() {
       fontSize: '0.9rem',
       marginTop: 5,
       color: darkMode ? '#aaa' : '#555'
+    },
+    footer: {
+      textAlign: 'center',
+      marginTop: 40,
+      padding: '20px 10px',
+      backgroundColor: darkMode ? '#1e1e1e' : '#fff',
+      borderTop: '1px solid #ccc'
+    },
+    footerTitle: {
+      fontSize: '1.8rem',
+      marginBottom: 10
+    },
+    footerText: {
+      fontSize: '1rem',
+      marginBottom: 20,
+      color: darkMode ? '#aaa' : '#555'
     }
   };
 
@@ -346,37 +382,60 @@ function App() {
         {darkMode ? 'Light Mode' : 'Dark Mode'}
       </button>
       {!isJoined ? (
-        <div style={themeStyles.joinContainer}>
-          <div style={themeStyles.hero}>
-            <h1 style={themeStyles.heroTitle}>Welcome to YChat</h1>
-            <p style={themeStyles.heroSubtitle}>
-              Talk with anyone, anywhere, privately, for free, always.
-            </p>
+        <div ref={joinSectionRef}>
+          <div style={themeStyles.joinContainer}>
+            <div style={themeStyles.hero}>
+              <h1 style={themeStyles.heroTitle}>Welcome to YChat</h1>
+              <p style={themeStyles.heroSubtitle}>
+                Talk with anyone, anywhere, privately, for free, always.
+              </p>
+            </div>
+            {avatar && <img src={avatar} alt="Avatar Preview" style={themeStyles.avatarPreview} />}
+            <input
+              style={themeStyles.input}
+              type="text"
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
+            <input
+              style={themeStyles.input}
+              type="text"
+              placeholder="Room Name"
+              value={roomName}
+              onChange={(e) => setRoomName(e.target.value)}
+            />
+            {/* Use a label to change the default file input text */}
+            <label style={themeStyles.fileLabel}>
+              Choose Profile Picture
+              <input
+                style={{ display: 'none' }}
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarChange}
+              />
+            </label>
+            <button style={themeStyles.button} onClick={handleJoinRoom}>
+              Join Room
+            </button>
           </div>
-          {avatar && <img src={avatar} alt="Avatar Preview" style={themeStyles.avatarPreview} />}
-          <input
-            style={themeStyles.input}
-            type="text"
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-          <input
-            style={themeStyles.input}
-            type="text"
-            placeholder="Room Name"
-            value={roomName}
-            onChange={(e) => setRoomName(e.target.value)}
-          />
-          <input
-            style={themeStyles.input}
-            type="file"
-            accept="image/*"
-            onChange={handleAvatarChange}
-          />
-          <button style={themeStyles.button} onClick={handleJoinRoom}>
-            Join Room
-          </button>
+          {/* New Footer Description Section */}
+          <div style={themeStyles.footer}>
+            <h2 style={themeStyles.footerTitle}>Discover YChat</h2>
+            <p style={themeStyles.footerText}>
+              Enjoy instant messaging without the hassle of creating an account. We respect your privacy—no personal information required!
+              Connect with friends or strangers in a secure, fast, and intuitive environment. Experience messaging as it should be.
+            </p>
+            <button style={themeStyles.button} onClick={scrollToJoin}>
+              Get Started Now
+            </button>
+            {/* Placeholder for images: add your images into public/images and update src attributes */}
+            <div style={{ marginTop: 20 }}>
+              <img src="/images/privacy.png" alt="Privacy" style={{ width: 80, margin: '0 10px' }} />
+              <img src="/images/fast.png" alt="Fast" style={{ width: 80, margin: '0 10px' }} />
+              <img src="/images/no-account.png" alt="No Account" style={{ width: 80, margin: '0 10px' }} />
+            </div>
+          </div>
         </div>
       ) : (
         <div style={themeStyles.chatContainer}>
