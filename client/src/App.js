@@ -3,13 +3,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import io from 'socket.io-client';
 
-// Initialize Socket.IO client to connect to your Render server URL
+// Initialize Socket.IO client to connect to your server
 const socket = io("https://ychat-lovu.onrender.com/");
 
-// Notification sound for new messages (ensure you have "notification.mp3" in public folder)
+// Notification sound for new messages (place "notification.mp3" in your public folder)
 const notificationSound = new Audio("notification.mp3");
 
-// Helper function to display relative time (e.g., "5 minutes ago")
+// Helper function to generate relative time (e.g., "5 minutes ago")
 function timeAgo(timestamp) {
   const now = new Date();
   const past = new Date(timestamp);
@@ -24,12 +24,11 @@ function timeAgo(timestamp) {
   return `${diffDays} days ago`;
 }
 
-// Component that cycles through an array of phrases for the animated tagline
+// Animated tagline component that cycles through phrases every 2 seconds
 const AnimatedTagline = () => {
   const phrases = ["with anyone", "anywhere", "privately", "for free", "always"];
   const [index, setIndex] = useState(0);
 
-  // Cycle through phrases every 2 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       setIndex(prev => (prev + 1) % phrases.length);
@@ -40,7 +39,7 @@ const AnimatedTagline = () => {
   return <span>{phrases[index]}</span>;
 };
 
-// Component for the animated typing indicator (shows ellipsis animation)
+// Component for an animated typing indicator (shows an ellipsis animation)
 const CombinedTypingIndicator = ({ users, style }) => {
   const [dots, setDots] = useState('');
   useEffect(() => {
@@ -58,10 +57,10 @@ function App() {
   // State declarations
   // ------------------------
 
-  // Connection & join page states
+  // Connection and join page states
   const [username, setUsername] = useState("");
   const [roomName, setRoomName] = useState("");
-  const [avatar, setAvatar] = useState(null); // User profile picture (Base64 string)
+  const [avatar, setAvatar] = useState(null); // Profile picture as Base64 string
   const [isJoined, setIsJoined] = useState(false);
   const [joinError, setJoinError] = useState("");
 
@@ -71,14 +70,14 @@ function App() {
   const [usersList, setUsersList] = useState([]);
   const [typingUsers, setTypingUsers] = useState([]);
 
-  // Dark mode state (false for light mode, true for dark mode)
+  // Dark mode state: false for light mode, true for dark mode
   const [darkMode, setDarkMode] = useState(false);
 
-  // Refs for auto-scrolling and join section scroll
+  // Refs for auto-scrolling and scrolling to the join section
   const messagesPanelRef = useRef(null);
   const joinSectionRef = useRef(null);
 
-  // Ref to debounce typing indicator events
+  // Ref for debouncing typing indicator events
   const typingTimeoutRef = useRef(null);
 
   // ------------------------
@@ -92,7 +91,7 @@ function App() {
       setMessages(data.messages);
     });
 
-    // If there is an error joining the room
+    // When there is an error joining the room
     socket.on('joinError', (error) => {
       setJoinError(error.message);
     });
@@ -106,12 +105,12 @@ function App() {
       }
     });
 
-    // Update user list in the room
+    // Update the user list in the room
     socket.on('usersList', (allUsers) => {
       setUsersList(allUsers);
     });
 
-    // When the server sends an update to read receipts
+    // Update read receipts when notified by the server
     socket.on('readReceipt', ({ messageId, readBy }) => {
       setMessages(prev => prev.map(msg => {
         if (msg._id === messageId) {
@@ -121,7 +120,7 @@ function App() {
       }));
     });
 
-    // When a user is typing, update typing indicator list
+    // Update typing indicator when a user is typing
     socket.on('userTyping', ({ username: typingUser }) => {
       setTypingUsers(prev => {
         if (!prev.includes(typingUser)) {
@@ -135,7 +134,7 @@ function App() {
       setTypingUsers(prev => prev.filter(u => u !== stopUser));
     });
 
-    // Clean up all listeners when component unmounts
+    // Clean up all event listeners on unmount
     return () => {
       socket.off('joinedRoom');
       socket.off('joinError');
@@ -167,9 +166,9 @@ function App() {
   // Event Handlers
   // ------------------------
 
-  // Toggle dark mode using a slider (see dark mode slider below in the JSX)
-  const toggleDarkMode = (e) => {
-    setDarkMode(e.target.checked);
+  // Toggle dark mode using a button with sun/moon icons
+  const toggleDarkMode = () => {
+    setDarkMode(prev => !prev);
   };
 
   // Handle typing events with a debounce timer
@@ -182,11 +181,11 @@ function App() {
   };
 
   // Handle profile picture upload for join page
-  // Validates that the file is an image and is below 10MB
+  // This function validates the file is an image and is below 10 MB
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Ensure the file is an image
+      // Check that the file type is an image
       if (!file.type.startsWith('image/')) {
         alert('Please select a valid image file.');
         return;
@@ -197,15 +196,19 @@ function App() {
         alert('Image is too large. Please select an image under 10MB.');
         return;
       }
+      // Use FileReader to convert the image file to a Base64 string
       const reader = new FileReader();
-      reader.onloadend = () => {
+      reader.onerror = () => {
+        alert('Error reading file. Please try a different image.');
+      };
+      reader.onload = () => {
         setAvatar(reader.result);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  // Handle joining a room; sends username, room, and avatar to server
+  // Handle joining a room by sending username, room name, and avatar to the server
   const handleJoinRoom = () => {
     if (!username.trim() || !roomName.trim()) {
       alert("Username and Room Name are required!");
@@ -214,40 +217,12 @@ function App() {
     socket.emit('joinRoom', { roomName, username, avatar });
   };
 
-  // Send a text message
+  // Send a text message to the room
   const sendMessage = () => {
     if (!currentMessage.trim()) return;
     socket.emit('chatMessage', { roomName, user: username, text: currentMessage, avatar });
     setCurrentMessage("");
     socket.emit('stopTyping', { roomName, username });
-  };
-
-  // ------------------------
-  // New: Send Image in Chat
-  // ------------------------
-  // This function handles sending an image as a chat message.
-  // The image is sent as a Base64 string in the "image" field.
-  const handleSendChatImage = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      // Validate that the file is an image
-      if (!file.type.startsWith('image/')) {
-        alert('Please select a valid image file.');
-        return;
-      }
-      // Limit file size to 10 MB
-      const maxSize = 10 * 1024 * 1024;
-      if (file.size > maxSize) {
-        alert('Image is too large. Please select an image under 10MB.');
-        return;
-      }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        // Emit a chat message with the image and no text
-        socket.emit('chatMessage', { roomName, user: username, text: "", avatar, image: reader.result });
-      };
-      reader.readAsDataURL(file);
-    }
   };
 
   // Scroll to the join form when "Get Started Now" is clicked
@@ -258,11 +233,10 @@ function App() {
   };
 
   // ------------------------
-  // Dynamic Styles
+  // Dynamic Styles (theme changes based on dark mode)
   // ------------------------
-  // The background gradient and colors change based on darkMode state.
   const themeStyles = {
-    // Container uses a gradient that changes based on dark mode.
+    // Container uses a gradient background that adapts based on dark mode
     container: {
       fontFamily: 'Poppins, sans-serif',
       padding: 20,
@@ -302,7 +276,7 @@ function App() {
       boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
       textAlign: 'center'
     },
-    // Style for profile picture preview on join page
+    // Style for profile picture preview on the join page
     avatarPreview: {
       width: 80,
       height: 80,
@@ -322,7 +296,7 @@ function App() {
       backgroundColor: darkMode ? '#333' : '#fff',
       color: darkMode ? '#e0e0e0' : '#333'
     },
-    // File label styled as a button for selecting profile picture
+    // Label for file input styled as a button
     fileLabel: {
       cursor: 'pointer',
       padding: '10px',
@@ -333,7 +307,7 @@ function App() {
       backgroundColor: darkMode ? '#333' : '#fff',
       color: darkMode ? '#e0e0e0' : '#333'
     },
-    // Style for buttons
+    // Style for general buttons
     button: {
       padding: 12,
       cursor: 'pointer',
@@ -357,7 +331,7 @@ function App() {
       boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
       backgroundColor: darkMode ? '#1e1e1e' : '#fff'
     },
-    // User panel on the left side
+    // Left panel for the user list
     userPanel: {
       width: '20%',
       borderRight: '1px solid #ccc',
@@ -375,7 +349,7 @@ function App() {
       display: 'flex',
       alignItems: 'center'
     },
-    // Style for user avatar shown in the user panel
+    // Style for user avatar in the user panel
     userAvatar: {
       width: 30,
       height: 30,
@@ -383,7 +357,7 @@ function App() {
       marginRight: 8,
       objectFit: 'cover'
     },
-    // Chat panel on the right side
+    // Right panel for the chat area
     chatPanel: {
       width: '80%',
       display: 'flex',
@@ -391,7 +365,7 @@ function App() {
       padding: 10,
       backgroundColor: darkMode ? '#121212' : '#fff'
     },
-    // Messages panel inside the chat panel
+    // Panel containing chat messages
     messagesPanel: {
       flex: 1,
       overflowY: 'auto',
@@ -414,13 +388,13 @@ function App() {
       position: 'relative',
       backgroundColor: darkMode ? '#2a2a2a' : '#F8F8F8'
     },
-    // Header for each message (contains avatar, username, and time)
+    // Header for each message (contains avatar, username, and timestamp)
     messageHeader: {
       display: 'flex',
       alignItems: 'center',
       marginBottom: 4
     },
-    // Avatar in message header
+    // Avatar in the message header
     messageAvatar: {
       width: 25,
       height: 25,
@@ -445,38 +419,7 @@ function App() {
       display: 'flex',
       marginTop: 10
     },
-    // New: Style for the dark mode slider container
-    darkModeSliderContainer: {
-      position: 'absolute',
-      top: 10,
-      right: 10,
-      display: 'flex',
-      alignItems: 'center'
-    },
-    // Style for the slider input (checkbox styled as a slider)
-    darkModeSlider: {
-      WebkitAppearance: 'none',
-      width: '50px',
-      height: '24px',
-      backgroundColor: darkMode ? '#FF758C' : '#ccc',
-      outline: 'none',
-      borderRadius: '34px',
-      position: 'relative',
-      cursor: 'pointer',
-      transition: 'background-color 0.2s'
-    },
-    // Slider thumb styling (the circle that moves)
-    darkModeSliderThumb: {
-      position: 'absolute',
-      top: '2px',
-      left: darkMode ? '26px' : '2px',
-      width: '20px',
-      height: '20px',
-      backgroundColor: '#fff',
-      borderRadius: '50%',
-      transition: 'left 0.2s'
-    },
-    // Footer description section (without pictures)
+    // Footer description section at the bottom of the join page
     footer: {
       textAlign: 'center',
       marginTop: 40,
@@ -492,6 +435,19 @@ function App() {
       fontSize: '1rem',
       marginBottom: 20,
       color: darkMode ? '#aaa' : '#555'
+    },
+    // Style for the dark mode toggle button
+    darkModeButton: {
+      position: 'absolute',
+      top: 10,
+      right: 10,
+      padding: '8px 12px',
+      cursor: 'pointer',
+      border: 'none',
+      borderRadius: 4,
+      backgroundColor: '#FF758C',
+      color: '#fff',
+      fontSize: '1rem'
     }
   };
 
@@ -500,36 +456,25 @@ function App() {
   // ------------------------
   return (
     <div style={themeStyles.container}>
-      {/* Dark Mode Slider */}
-      <div style={themeStyles.darkModeSliderContainer}>
-        <label htmlFor="darkModeSlider" style={{ marginRight: '8px' }}>
-          {darkMode ? 'Dark Mode' : 'Light Mode'}
-        </label>
-        {/* Hidden checkbox styled as a slider */}
-        <input 
-          id="darkModeSlider"
-          type="checkbox" 
-          checked={darkMode} 
-          onChange={toggleDarkMode} 
-          style={themeStyles.darkModeSlider}
-        />
-        <div style={themeStyles.darkModeSliderThumb}></div>
-      </div>
+      {/* Dark Mode Toggle Button with Sun/Moon icons */}
+      <button style={themeStyles.darkModeButton} onClick={toggleDarkMode}>
+        {darkMode ? '🌞 Light Mode' : '🌜 Dark Mode'}
+      </button>
 
       {!isJoined ? (
-        // Join Page (Landing Page) with hero section and animated tagline
+        // Join (Landing) Page with Hero Section and Animated Tagline
         <div ref={joinSectionRef}>
           <div style={themeStyles.joinContainer}>
             <div style={themeStyles.hero}>
-              {/* Changed from "Talk" to "Chat" on the front page */}
+              {/* Changed "Talk" to "Chat" on the front page */}
               <h1 style={themeStyles.heroTitle}>Welcome to Chat</h1>
               <p style={themeStyles.heroSubtitle}>
                 Chat <AnimatedTagline />
               </p>
             </div>
-            {/* Display profile picture preview if one is selected */}
+            {/* Profile picture preview */}
             {avatar && <img src={avatar} alt="Avatar Preview" style={themeStyles.avatarPreview} />}
-            {/* Username input */}
+            {/* Username input field */}
             <input
               style={themeStyles.input}
               type="text"
@@ -537,7 +482,7 @@ function App() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
             />
-            {/* Room name input */}
+            {/* Room name input field */}
             <input
               style={themeStyles.input}
               type="text"
@@ -545,7 +490,7 @@ function App() {
               value={roomName}
               onChange={(e) => setRoomName(e.target.value)}
             />
-            {/* Label and hidden file input for profile picture */}
+            {/* Label for profile picture upload */}
             <label style={themeStyles.fileLabel}>
               Choose Profile Picture
               <input
@@ -559,7 +504,7 @@ function App() {
               Join Room
             </button>
           </div>
-          {/* New Footer Section with a description and a Get Started button */}
+          {/* Footer description section with a call-to-action */}
           <div style={themeStyles.footer}>
             <h2 style={themeStyles.footerTitle}>Discover Chat</h2>
             <p style={themeStyles.footerText}>
@@ -572,7 +517,7 @@ function App() {
           </div>
         </div>
       ) : (
-        // Chat Page
+        // Chat Room Page
         <div style={themeStyles.chatContainer}>
           {/* Left Panel: Users List */}
           <div style={themeStyles.userPanel}>
@@ -599,11 +544,8 @@ function App() {
                     <strong>{msg.user}</strong>
                     <div style={themeStyles.messageTime}>{timeAgo(msg.createdAt)}</div>
                   </div>
-                  {/* If the message contains an image, render it; otherwise show text */}
-                  {msg.image 
-                    ? <img src={msg.image} alt="Sent content" style={{ maxWidth: '100%', borderRadius: 6 }} />
-                    : <div>{msg.text}</div>
-                  }
+                  {/* Since image sending is removed, we render only text messages */}
+                  <div>{msg.text}</div>
                   {msg.readBy && msg.readBy.length > 0 && (
                     <div style={themeStyles.readReceipt}>
                       Read by: {msg.readBy.join(', ')}
@@ -616,7 +558,7 @@ function App() {
             {typingUsers.length > 0 && (
               <CombinedTypingIndicator users={typingUsers} style={themeStyles.typingIndicator} />
             )}
-            {/* Row for sending messages and images */}
+            {/* Row for sending messages */}
             <div style={themeStyles.inputRow}>
               <input
                 style={themeStyles.input}
@@ -636,16 +578,6 @@ function App() {
               <button style={themeStyles.button} onClick={sendMessage}>
                 Send
               </button>
-              {/* Hidden file input for sending image messages */}
-              <label style={{ ...themeStyles.fileLabel, marginLeft: 8, padding: '8px 12px' }}>
-                Send Image
-                <input
-                  style={{ display: 'none' }}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleSendChatImage}
-                />
-              </label>
             </div>
           </div>
         </div>
