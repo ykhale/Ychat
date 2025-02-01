@@ -23,6 +23,21 @@ function timeAgo(timestamp) {
   return `${diffDays} days ago`;
 }
 
+// Component for animated tagline that cycles through phrases
+const AnimatedTagline = () => {
+  const phrases = ["with anyone", "anywhere", "privately", "for free", "always"];
+  const [index, setIndex] = useState(0);
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIndex(prev => (prev + 1) % phrases.length);
+    }, 2000); // Cycle every 2 seconds
+    return () => clearInterval(interval);
+  }, []);
+  
+  return <span>{phrases[index]}</span>;
+};
+
 // Combined typing indicator component with animated ellipsis
 const CombinedTypingIndicator = ({ users, style }) => {
   const [dots, setDots] = useState('');
@@ -55,12 +70,11 @@ function App() {
 
   // Ref for messages panel for auto-scroll and read receipts
   const messagesPanelRef = useRef(null);
+  // Ref for the join section (for "Get Started Now" scrolling)
+  const joinSectionRef = useRef(null);
 
   // Timer for typing indicator debounce
   const typingTimeoutRef = useRef(null);
-
-  // Ref for the join section (for "Get Started Now" scrolling)
-  const joinSectionRef = useRef(null);
 
   useEffect(() => {
     socket.on('joinedRoom', (data) => {
@@ -142,10 +156,19 @@ function App() {
     }, 2000);
   };
 
-  // Handle avatar file upload; convert to Base64 string
+  // Handle avatar file upload; convert to Base64 string after validating file type and size (limit: 10 MB)
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      if (!file.type.startsWith('image/')) {
+        alert('Please select a valid image file.');
+        return;
+      }
+      const maxSize = 10 * 1024 * 1024; // 10 MB
+      if (file.size > maxSize) {
+        alert('Image is too large. Please select an image under 10MB.');
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
         setAvatar(reader.result);
@@ -387,7 +410,7 @@ function App() {
             <div style={themeStyles.hero}>
               <h1 style={themeStyles.heroTitle}>Welcome to YChat</h1>
               <p style={themeStyles.heroSubtitle}>
-                Talk with anyone, anywhere, privately, for free, always.
+                Talk <AnimatedTagline />
               </p>
             </div>
             {avatar && <img src={avatar} alt="Avatar Preview" style={themeStyles.avatarPreview} />}
@@ -405,7 +428,6 @@ function App() {
               value={roomName}
               onChange={(e) => setRoomName(e.target.value)}
             />
-            {/* Use a label to change the default file input text */}
             <label style={themeStyles.fileLabel}>
               Choose Profile Picture
               <input
