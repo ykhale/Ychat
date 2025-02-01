@@ -467,7 +467,7 @@ function App() {
           <div style={themeStyles.joinContainer}>
             <div style={themeStyles.hero}>
               {/* Changed "Talk" to "Chat" on the front page */}
-              <h1 style={themeStyles.heroTitle}>Welcome to Chat</h1>
+              <h1 style={themeStyles.heroTitle}>Welcome to YChat</h1>
               <p style={themeStyles.heroSubtitle}>
                 Chat <AnimatedTagline />
               </p>

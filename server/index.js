@@ -11,14 +11,15 @@ const app = express();
 const allowedOrigins = ["https://ychats.netlify.app"];
 app.use(cors({ origin: allowedOrigins, methods: ["GET", "POST"], credentials: true }));
 
-// Create HTTP server and attach Socket.IO
+// Create HTTP server and attach Socket.IO with increased payload limit
 const server = http.createServer(app);
 const io = socketIO(server, {
   cors: {
     origin: allowedOrigins,
     methods: ["GET", "POST"],
     credentials: true
-  }
+  },
+  maxHttpBufferSize: 50 * 1024 * 1024 // Allow payloads up to 50 MB
 });
 
 // Ensure MONGO_URI is set
