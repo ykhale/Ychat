@@ -29,63 +29,49 @@ if (!MONGO_URI) {
 }
 
 // Connect to MongoDB Atlas
-mongoose.connect(MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
+mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log("✅ Successfully connected to MongoDB Atlas!"))
   .catch(err => {
     console.error("❌ MongoDB connection error:", err);
     process.exit(1);
   });
 
-// Define a Message schema with TTL (24 hours)
+// Define a Message schema with TTL (24 hours), relative timestamps and read receipts
 const messageSchema = new mongoose.Schema({
   roomName: { type: String, required: true },
   user: { type: String, required: true },
+  avatar: { type: String }, // optionally store sender's avatar with the message
   text: { type: String, required: true },
-  time: {
-    type: String,
-    default: () => new Date().toLocaleTimeString()
-  },
-  // We'll store read receipts here (non-persistent, for demo)
-  readBy: { type: [String], default: [] },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-    index: { expires: '24h' } // Auto-delete after 24 hours
-  }
+  createdAt: { type: Date, default: Date.now, index: { expires: '24h' } },
+  readBy: { type: [String], default: [] }
 });
-
 const Message = mongoose.model('Message', messageSchema);
 
-// Maintain a map of room -> list of users
+// Maintain a map of room -> list of users (as objects: { username, avatar })
 const roomUsers = {};
-// In-memory read receipts, keyed by messageId
+// In-memory read receipts (keyed by message ID)
 const readReceipts = {};
 
-// Socket.IO Connection Handling
 io.on('connection', (socket) => {
   console.log(`🟢 Client connected: ${socket.id}`);
 
-  // When a user joins a room (no passkey needed)
-  socket.on('joinRoom', async ({ roomName, username }) => {
+  // When a user joins a room (avatar now included)
+  socket.on('joinRoom', async ({ roomName, username, avatar }) => {
     socket.join(roomName);
     socket.roomName = roomName;
     socket.username = username;
-
-    console.log(`🔹 User "${username}" joined room: "${roomName}"`);
-
-    // Add user to roomUsers
+    socket.avatar = avatar;
     if (!roomUsers[roomName]) {
       roomUsers[roomName] = [];
     }
-    if (!roomUsers[roomName].includes(username)) {
-      roomUsers[roomName].push(username);
+    // Only add if not already present
+    if (!roomUsers[roomName].find(u => u.username === username)) {
+      roomUsers[roomName].push({ username, avatar });
     }
+    console.log(`🔹 User "${username}" joined room: "${roomName}"`);
 
     try {
-      // Fetch last 24 hours of messages and ensure _id and readBy fields
+      // Fetch last 24 hours of messages (including createdAt)
       const recentMessages = await Message.find({ roomName }).sort({ createdAt: 1 });
       const messages = recentMessages.map(msg => {
         const m = msg.toObject();
@@ -94,7 +80,6 @@ io.on('connection', (socket) => {
         return m;
       });
       socket.emit('joinedRoom', { roomName, messages });
-
       // Broadcast updated user list to everyone in the room
       io.to(roomName).emit('usersList', roomUsers[roomName]);
     } catch (error) {
@@ -103,16 +88,15 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Handle new chat message
-  socket.on('chatMessage', async ({ roomName, user, text }) => {
+  // Handle new chat messages (avatar is also sent along)
+  socket.on('chatMessage', async ({ roomName, user, text, avatar }) => {
     try {
-      // The sender has read their own message
-      const newMessage = new Message({ roomName, user, text, readBy: [user] });
+      // The sender automatically "reads" their own message
+      const newMessage = new Message({ roomName, user, text, avatar, readBy: [user] });
       const savedMessage = await newMessage.save();
       let messageObj = savedMessage.toObject();
       messageObj._id = messageObj._id.toString();
       if (!messageObj.readBy) messageObj.readBy = [];
-      // Initialize read receipts in memory
       readReceipts[messageObj._id] = messageObj.readBy;
       io.to(roomName).emit('chatMessage', messageObj);
     } catch (error) {
@@ -121,7 +105,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Handle read receipt from client
+  // Handle read receipt updates from clients
   socket.on('messageRead', ({ messageId, roomName, username }) => {
     if (!readReceipts[messageId]) {
       readReceipts[messageId] = [];
@@ -129,7 +113,6 @@ io.on('connection', (socket) => {
     if (!readReceipts[messageId].includes(username)) {
       readReceipts[messageId].push(username);
     }
-    // Broadcast updated read receipt to room
     io.to(roomName).emit('readReceipt', { messageId, readBy: readReceipts[messageId] });
   });
 
@@ -141,13 +124,13 @@ io.on('connection', (socket) => {
     socket.to(roomName).emit('userStopTyping', { username });
   });
 
-  // Handle disconnection
+  // Handle disconnection: remove user from room list and broadcast update
   socket.on('disconnect', () => {
     console.log(`🔴 Client disconnected: ${socket.id}`);
     const userRoom = socket.roomName;
     const userName = socket.username;
     if (userRoom && userName && roomUsers[userRoom]) {
-      roomUsers[userRoom] = roomUsers[userRoom].filter(u => u !== userName);
+      roomUsers[userRoom] = roomUsers[userRoom].filter(u => u.username !== userName);
       io.to(userRoom).emit('usersList', roomUsers[userRoom]);
     }
   });
