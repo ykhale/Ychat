@@ -8,7 +8,7 @@ const mongoose = require('mongoose');
 const app = express();
 
 // CORS Configuration - allow only your Netlify frontend
-const allowedOrigins = ["https://ychats.netlify.app"];
+const allowedOrigins = ["https://ychats.netlify.app","https://ychat.live"];
 app.use(cors({ origin: allowedOrigins, methods: ["GET", "POST"], credentials: true }));
 
 // Create HTTP server and attach Socket.IO with increased payload limit
